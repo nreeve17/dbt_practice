@@ -1,0 +1,27 @@
+
+# Name your dbt project. This also needs to match the `profile:` key below,
+# which tells dbt which profile in profiles.yml to use for this project.
+name: 'dbt_practice'
+version: '1.0.0'
+config-version: 2
+
+# This must match a profile name in profiles.yml
+profile: 'dbt_practice'
+
+# Where dbt should look for various file types
+model-paths: ["models"]
+analysis-paths: ["analyses"]
+test-paths: ["tests"]
+seed-paths: ["seeds"]
+macro-paths: ["macros"]
+snapshot-paths: ["snapshots"]
+
+clean-targets:
+  - "target"
+  - "dbt_packages"
+
+# Default materialization for all models in this project.
+# Override per-folder or per-model as your project grows.
+models:
+  dbt_practice:
+    +materialized: view
