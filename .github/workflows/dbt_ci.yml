@@ -1,0 +1,63 @@
+name: dbt CI
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  dbt-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: dbt_ci
+          POSTGRES_PASSWORD: dbt_ci_password
+          POSTGRES_DB: nicome
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd="pg_isready -U dbt_ci"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dbt
+        run: pip install dbt-postgres
+
+      - name: Write profiles.yml for CI
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          dbt_practice:
+            target: ci
+            outputs:
+              ci:
+                type: postgres
+                host: localhost
+                port: 5432
+                user: dbt_ci
+                password: dbt_ci_password
+                dbname: nicome
+                schema: dbt_ci
+                threads: 4
+          EOF
+
+      - name: Check dbt connection
+        working-directory: fermentation
+        run: dbt debug
+
+      - name: Build and test models
+        working-directory: fermentation
+        run: dbt build
